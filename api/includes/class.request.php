@@ -46,7 +46,7 @@ class REQUESTS
 			$projectArr["request"] = []; //invalid login
 		}
         
-        $selectFileds=array("categoryId","subCategoryId","quantityRequested");
+        $selectFileds=array("categoryId","subCategoryId","quantityRequested","quantityDelivered");
 		$whereClause = "requestId='".$listingid."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$selectFileds,$whereClause);
 		
@@ -71,6 +71,55 @@ class REQUESTS
         $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		$whereClause="requestId=".$listingId;
         $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$updateArr,$whereClause);
+		$returnval["response"] ="success";
+        $returnval["responsecode"] = 1; 
+		return $this->common->arrayToJson($returnval);
+	}
+	function generateDO($postArr){
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+ 		$listingId = $postArr["listingId"];
+		$dbm = new DB;
+	
+        $insertArr["modifiedOn"] = date("Y-m-d H:i:s");
+        $insertArr["requestStatus"] = trim($postArr["requestStatus"]);
+		$insertArr["modifiedBy"] = trim($postArr["userId"]);
+		 $insertArr["driverId"]=trim($postArr["driverName"]);
+        $insertArr["vehicleId"]=trim($postArr["vehicleName"]);		
+		$insertArr["DORemarks"]=trim($postArr["remarks"]);
+		
+        $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		$whereClause="requestId=".$listingId;
+        $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$insertArr,$whereClause);
+		$insid = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$whereClause);
+		
+		foreach($postArr["multiCategory"] as $value){
+			$insertArr2 = [];
+			$insertArr2["requestId"]=$listingId;     
+			$insertArr2["categoryId"]=trim($value["categoryId"]);       
+			$insertArr2["subCategoryId"]=trim($value["subCategoryId"]);
+			$insertArr2["quantityRequested"]=trim($value["quantityRequested"]);
+			$insertArr2["quantityDelivered"]=trim($postArr[$value["categoryId"]]);
+			$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$insertArr2,$whereClause);
+			// pr($insertArr2);
+		}
+		$returnval["response"] ="success";
+        $returnval["responsecode"] = 1; 
+		return $this->common->arrayToJson($returnval);
+	}
+	function doApprove($postArr){
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+ 		$listingId = $postArr["listingId"];
+		$dbm = new DB;
+	
+        $insertArr["modifiedOn"] = date("Y-m-d H:i:s");
+        $insertArr["requestStatus"] = trim($postArr["requestStatus"]);
+		$insertArr["modifiedBy"] = trim($postArr["userId"]);		 		
+		$insertArr["driverRemarks"]=trim($postArr["remarks"]);
+		
+        $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		$whereClause="requestId=".$listingId;
+        $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$insertArr,$whereClause);
+		
 		$returnval["response"] ="success";
         $returnval["responsecode"] = 1; 
 		return $this->common->arrayToJson($returnval);

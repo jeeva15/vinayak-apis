@@ -26,8 +26,16 @@ $requestObj = new REQUESTS();
      $response = $requestObj->updateRequestStatus($listingId, $listingStatus, $remarks);
  }
  elseif($obj["requestCode"] === 5){
-   pr($obj);
+
      $response = $requestObj->updateRequestDetails($obj);
+ }
+ elseif($obj["requestCode"] === 6){
+
+     $response = $requestObj->generateDO($obj);
+ }
+  elseif($obj["requestCode"] === 7){
+
+     $response = $requestObj->doApprove($obj);
  }
 
 echo $response;
