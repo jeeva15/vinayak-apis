@@ -30,7 +30,7 @@ class DB {
     // CREATE MYSQL CONNECTION //
     public function connect($conType, $dbName, $dbUsername='', $dbPassword='') 
     {		
-            global $DBINFO,$SERVERS;
+            global $DBINFO,$SERVERS, $MYSQLPORT;
 
             if(trim($dbUsername) == '' || trim($dbPassword) == '')
             {
@@ -47,7 +47,7 @@ class DB {
                     $dbhost = $SERVERS['DBHOST_SLAVE'];
             } 	
 
-            $this->db_link = @new mysqli($dbhost, $dbUsername, $dbPassword, $dbName, 3306);
+            $this->db_link = @new mysqli($dbhost, $dbUsername, $dbPassword, $dbName, $MYSQLPORT);
             
             if(!$this->db_link) {
                 //     $this->recordError("DB_CONNECTION_ERR");

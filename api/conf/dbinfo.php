@@ -5,6 +5,7 @@ DB details defined here
 
 $DBINFO["USERNAME"] = "root";
 $DBINFO["PASSWORD"] = "";
+$MYSQLPORT = 3306;
 
 $DBNAME["NAME"] = "vinayak";
 
