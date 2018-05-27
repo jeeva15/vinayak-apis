@@ -89,8 +89,8 @@ class REQUESTS
 		
         $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		$whereClause="requestId=".$listingId;
-        // $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$insertArr,$whereClause);
-		// $insid = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$whereClause);
+        $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$insertArr,$whereClause);
+		$insid = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$whereClause);
 		
 		foreach($postArr["multiCategory"] as $value){
 			$insertArr2 = [];
@@ -100,8 +100,8 @@ class REQUESTS
 			$insertArr2["quantityRequested"]=trim($value["quantityRequested"]);
 			$insertArr2["quantityDelivered"]=trim($postArr[$value["categoryId"]]);
 			$insertArr2["description"] = trim($value["description"]);
-			// $insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$insertArr2,$whereClause);
-			pr($insertArr2);
+			$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$insertArr2,$whereClause);
+			// pr($insertArr2);
 		}
 		$returnval["response"] ="success";
         $returnval["responsecode"] = 1; 
