@@ -91,12 +91,12 @@ class DB {
     }
     
     // EXECUTE DIRECT QUERY //
-    public function execute_direct_query($query) 
+    public function execute_direct_query($db_link, $query, $returnType=1) 
     {          		
             $this->resetAll();
             if($this->checkSQLInjection($query,$stopProcess))
 	    {
-                if(!mysqli_ping($this->db_link))
+                if(!mysqli_ping($db_link))
                 {
                         $this->recordError("DB_CONNECTION_ERR");
                         return false;
@@ -104,8 +104,8 @@ class DB {
     
                 $this->query = $query;		
                 $this->reqStart = time();
-                $this->resource = mysqli_query($this->query, $this->db_link);
-                $this->affectedRows=mysqli_affected_rows();
+                $this->resource = mysqli_query($db_link, $this->query);
+                $this->affectedRows=mysqli_affected_rows($db_link);
     
                 $this->reqEnd = time();  
                 $resTime = $this->reqEnd - $this->reqStart;
@@ -118,8 +118,12 @@ class DB {
                         $this->recordError("DB_EXEC_QRY_ERR");
                         return false;
                 }
-                else
-                        return $this->affectedRows;
+                else{
+                         if($returnType == 2)
+                            return mysqli_insert_id($db_link);
+                        else
+                                return $this->affectedRows;
+                }
                     
             }
 
@@ -298,7 +302,7 @@ class DB {
                            
                             }
                     }
-                   echo $update_query = "UPDATE ".$dbName.".".$tableName." SET ".rtrim($u_query,', ')." WHERE ".$whereClause;
+                    $update_query = "UPDATE ".$dbName.".".$tableName." SET ".rtrim($u_query,', ')." WHERE ".$whereClause;
                     			
                     
                     if (!$this->execute_query($dbLink, $update_query)) 
