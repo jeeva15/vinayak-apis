@@ -17,7 +17,8 @@ $requestObj = new REQUESTS();
  }
  elseif($obj["requestCode"] === 3){
      $listingId = $obj["listingId"];
-     $response = $requestObj->getViewDetails($listingId);
+     $doNumber = $obj["doNumber"];
+     $response = $requestObj->getViewDetails($listingId, $doNumber);
  }
  elseif($obj["requestCode"] === 4){
      $listingId = $obj["listingId"];
@@ -36,6 +37,10 @@ $requestObj = new REQUESTS();
   elseif($obj["requestCode"] === 7){
 
      $response = $requestObj->doApprove($obj);
+ }
+ elseif($obj["requestCode"] === 8){
+
+     $response = $requestObj->collectionUpdate($obj);
  }
 
 echo $response;

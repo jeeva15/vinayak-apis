@@ -10,6 +10,8 @@ class REQUESTS
 		$this->common = $commonObj;
 	}
     function requestDetails($requestStatus){
+// 		error_reporting(E_ALL);
+// ini_set("display_errors",1);
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
@@ -27,35 +29,51 @@ class REQUESTS
 			$projectArr = []; 
 		}
 
-		$results = [];
-
-		foreach($projectArr as $key=>$value){
-				
-				$selectFileds=array("activeDoNumber","modfiedOn");
-				$whereClause = "requestId=".$value["requestId"]." limit 1";
-				$res1=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$selectFileds,$whereClause);
-				if($res1[1] > 0){
-					$doresult = $db->fetchArray($res1[0]);
-				}
-				
-				$results[$key] = $value;
-				$results[$key]["REQID"] = $this->idGenerator($value["requestId"], $value["createdOn"]);
-				// $results[$key]["activeDoNumber"] = $this->idGenerator($doresult["requestId"],$doresult["modfiedOn"]);
-		}
+		$results = $projectArr;
+		// if($requestStatus == "3"){
+			foreach($projectArr as $key=>$value){
+					
+					$results[$key] = $value;
+					$results[$key]["REQID"] = $this->getDONumbers($value["requestId"]);
+					$results[$key]["formattedReqID"] = $this->idGenerator($value["requestId"],$value["createdOn"]);
+			}
+		// }
 		// pr($results);
- 
+ 		// $results[$key]["REQID"] = 
 		return $this->common->arrayToJson($results);
+	}
+	function getDONumbers($requestId){
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		$selectFileds=array("DONumber","createdOn");
+		$whereClause = "requestId=".$requestId;
+		$res1=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$selectFileds,$whereClause);
+		$doNumbers = [];
+		if($res1[1] > 0){
+			$doresult = $db->fetchArray($res1[0], 1);		
+			$i = 0;
+			foreach($doresult as $dovalue){
+				$doNumbers[$dovalue["DONumber"]] = $this->idGenerator($dovalue["DONumber"], $dovalue["modfiedOn"]);
+				$i++;
+			}
+		}
+		return $doNumbers;
 	}
 	function idGenerator($id, $date){
 		$month = date("m", strtotime($date));
 		return $month."/".sprintf("%'.04d\n", $id);
 	
 	}
-    function getViewDetails($listingid){
+    function getViewDetails($listingid, $doNumberReq){
             global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-		
+		$doNumber = 0;
+		if($doNumber != ""){
+			$doNumber = $doNumberReq;
+		}
+
 		$selectFileds=array("requestId","createdBy","notificationType","projectIdFrom","requestStatus","remarks","approx","notificationNumber","driverId","vehicleId","createdOn",);
 		$whereClause = "requestId='".$listingid."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$selectFileds,$whereClause);
@@ -68,7 +86,7 @@ class REQUESTS
 			$projectArr["request"] = []; //invalid login
 		}
         $projectArr["request"]["REQID"] = $this->idGenerator($projectArr["request"]["requestId"], $projectArr["request"]["createdOn"]);
-        $selectFileds=array("categoryId","subCategoryId","quantityRequested","quantityDelivered","description","activeDoNumber","quantityRemaining","modfiedOn");
+        $selectFileds=array("categoryId","subCategoryId","quantityRequested","quantityDelivered","description","activeDoNumber","quantityRemaining","quantityAccepted","modfiedOn");
 		$whereClause = "requestId='".$listingid."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$selectFileds,$whereClause);
 		
@@ -98,63 +116,119 @@ class REQUESTS
 		return $this->common->arrayToJson($returnval);
 	}
 	function generateDO($postArr){
-// 		error_reporting(E_ALL);
-// ini_set("display_errors",1);
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		error_reporting(E_ALL);
+		ini_set("display_errors",1);
  		$listingId = $postArr["listingId"];
 		$dbm = new DB;
 		$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
-		 $selectFileds="insert into  ".$TABLEINFO["REQUEST"]." (notificationType, projectIdFrom, projectIdTo, description, driverId, vehicleId, remarks, approx, requestStatus, approverComments, notificationNumber, DORemarks, driverRemarks, createdBy, modifiedBy, createdOn, parentId) SELECT notificationType, projectIdFrom, projectIdTo, description, driverId, vehicleId, remarks, approx, requestStatus, approverComments, notificationNumber, DORemarks, driverRemarks, createdBy, modifiedBy, createdOn,requestId FROM ".$TABLEINFO["REQUEST"]." WHERE requestId=".$listingId;
-		$lastInsertId=$dbm->execute_direct_query($dbcon, $selectFileds, 2);
-		
-		
-		if($postArr["requestStatus"] == "3"){
-
-			$insertArr["requestStatus"]=99;//duplicated in DO generation
-			$whereClause="requestId=".$listingId;
-			$id = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$insertArr,$whereClause);
+		$selectFileds=array("max(DONumber) as DOno");
+		$whereClause = "requestId!='0'";
+		$res=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$selectFileds,$whereClause);
+		$DONumber = 1;
+		$projectArr = [];
+		if($res[1] > 0){
+			$projectArr = $dbm->fetchArray($res[0]); 
+			$DONumber = $projectArr["DOno"]+1;
 		}
+		
+		
+		$updid = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$whereClause);
+		// $updateArr["active"]=0;
+		// $insid2 = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$updateArr,$whereClause);
+		
+		$j = 0;
+		$i = 0;
+		foreach($postArr["multiCategory"] as $value){
+			$insertArr2 = [];
+			$uniqueId = $value["categoryId"]."-".$value["subCategoryId"]."-".$value["quantityRequested"];
+			$qntyDelivered = trim($postArr[$uniqueId]);
+			$qntityRemain = $postArr[$uniqueId."remain"];
+			$remain = $qntityRemain - $qntyDelivered;
+			$j++;
+			if($remain == 0){
+				$i++; 
+			}
+			$insertArr2["requestId"]=$listingId;     
+			$insertArr2["categoryId"]=trim($value["categoryId"]);       
+			$insertArr2["subCategoryId"]=trim($value["subCategoryId"]);
+			$insertArr2["quantityRequested"]=trim($value["quantityRequested"]);
+			$insertArr2["quantityDelivered"]=$qntyDelivered;
+			$insertArr2["quantityAccepted"]=$qntyDelivered;
+			$insertArr2["description"] = trim($value["description"]);
+			$insertArr2["quantityRemaining"] = $remain;
+			$insertArr2["activeDoNumber"] = $DONumber;
+			$insertArr2["modfiedOn"] = date("Y-m-d H:i:s");
+			// pr($insertArr2);
+			$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$insertArr2,$whereClause);
+
+			$insertArr3["requestId"]=$listingId;     
+			$insertArr3["categoryId"]=trim($value["categoryId"]);       
+			$insertArr3["subCategoryId"]=trim($value["subCategoryId"]);			
+			$insertArr3["quantityDelivered"]=trim($postArr[$value["categoryId"]]);			
+			$insertArr3["DONumber"] = $DONumber;
+			$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$insertArr3,$whereClause);
+		}
+		//update driver details
+		$insertArr["modifiedOn"] = date("Y-m-d H:i:s");
+		if($i == $j){
+			$insertArr["requestStatus"] = 4;
+		}
+		$insertArr["modifiedBy"] = trim($postArr["userId"]);
+		$insertArr["driverId"]=trim($postArr["driverName"]);
+		$insertArr["vehicleId"]=trim($postArr["vehicleName"]);		
+		$insertArr["DORemarks"]=trim($postArr["remarks"]);
+		
+		$whereClause="requestId=".$listingId;
+		$insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$insertArr,$whereClause);
+	
+	
+		$returnval["response"] ="success";
+		$returnval["responsecode"] = 1; 
+		return $this->common->arrayToJson($returnval);
+		
+	}
+	function collectionUpdate($postArr){
+error_reporting(E_ALL);
+ini_set("display_errors",1);
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+ 		$listingId = $postArr["listingId"];
+		$dbm = new DB;
+		$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);	
+		$insertArr["requestStatus"] = "7";
+		$whereClause="requestId=".$listingId;
+		$id = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$insertArr,$whereClause);
+	
 		// $updid = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$whereClause);
 		// $updateArr["active"]=0;
 		// $insid2 = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$updateArr,$whereClause);
-		if($lastInsertId != ""){
+		
 			foreach($postArr["multiCategory"] as $value){
 				$insertArr2 = [];
 				$uniqueId = $value["categoryId"]."-".$value["subCategoryId"]."-".$value["quantityRequested"];
 				$qntyDelivered = trim($postArr[$uniqueId]);
 				$qntityRemain = $postArr[$uniqueId."remain"];
-				$insertArr2["requestId"]=$lastInsertId;     
+				$insertArr2["requestId"]=$listingId;     
 				$insertArr2["categoryId"]=trim($value["categoryId"]);       
 				$insertArr2["subCategoryId"]=trim($value["subCategoryId"]);
 				$insertArr2["quantityRequested"]=trim($value["quantityRequested"]);
-				$insertArr2["quantityDelivered"]=$qntyDelivered;
+				$insertArr2["quantityDelivered"]=trim($value["quantityDelivered"]);
+				$insertArr2["quantityAccepted"]=$qntyDelivered;
 				$insertArr2["description"] = trim($value["description"]);
-				$insertArr2["quantityRemaining"] = $qntityRemain - $qntyDelivered;
-				$insertArr2["activeDoNumber"] = $DONumber;
+				// $insertArr2["quantityRemaining"] = $qntityRemain - $qntyDelivered;
+				// $insertArr2["activeDoNumber"] = $DONumber;
 				$insertArr2["modfiedOn"] = date("Y-m-d H:i:s");
+				
 				// pr($insertArr2);
 				$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$insertArr2,$whereClause);
 
-				// $insertArr3["requestId"]=$listingId;     
-				// $insertArr3["categoryId"]=trim($value["categoryId"]);       
-				// $insertArr3["subCategoryId"]=trim($value["subCategoryId"]);			
-				// $insertArr3["quantityDelivered"]=trim($postArr[$value["categoryId"]]);			
-				// $insertArr3["DONumber"] = $DONumber;
-				// $insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$insertArr3,$whereClause);
+				
 			}
-			//update driver details
-			$whereClause = "requestId=".$lastInsertId;
-			$updateArr["driverId"]=trim($postArr["driverName"]);
-			$updateArr["vehicleId"]=trim($postArr["vehicleName"]);		
-			$updateArr["DORemarks"]=trim($postArr["remarks"]);
-			$insertArr2["createdOn"] = date("Y-m-d H:i:s");
-			$updateArr["requestStatus"]=4;
-			$insid2 = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$updateArr,$whereClause);
 		
 			$returnval["response"] ="success";
 			$returnval["responsecode"] = 1; 
 			return $this->common->arrayToJson($returnval);
-		}
+		
 	}
 	function doApprove($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
