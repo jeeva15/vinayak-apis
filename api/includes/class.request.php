@@ -61,13 +61,18 @@ class REQUESTS
 		else{
 			$projectArr = []; 
 		}
-		$projectArr = array_unique($projectArr);
+		foreach($projectArr as $k=>$val){
+			$uniqueReqId[$k] = $val["requestId"];
+		}
+			// pr($projectArr);
+		
+		$projectArr = array_unique($uniqueReqId);
 		$results = [];
-		$listingids = [];
-		// if($requestStatus == "3"){
-			foreach($projectArr as $key=>$value){
+	
+			$key = 0;
+			foreach($projectArr as $k=>$value){
 					$selectFileds=array("requestId","createdBy","notificationType","projectIdFrom","requestStatus","createdOn");
-					$whereClause = "requestId='".$value["requestId"]."'";
+					$whereClause = "requestId='".$value."'";
 					$res2=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$selectFileds,$whereClause);
 					$listingDetails = [];
 					if($res[1] > 0){
@@ -75,13 +80,11 @@ class REQUESTS
 						
 					}					
 					$results[$key] = $listingDetails;
-					$results[$key]["REQID"] = $this->getDONumbers($value["requestId"],$requestStatus);
-					$results[$key]["formattedReqID"] = $this->idGenerator($value["requestId"],$listingDetails["createdOn"]);
-					$listingids[$key] = $value["requestId"];
+					$results[$key]["REQID"] = $this->getDONumbers($value,$requestStatus);
+					$results[$key]["formattedReqID"] = $this->idGenerator($value,$listingDetails["createdOn"]);
+					$key++;
 			}
-		// }
-		// pr($results);
- 		// $results[$key]["REQID"] = 
+		
 		return $this->common->arrayToJson($results);
 
 	}
@@ -229,7 +232,7 @@ class REQUESTS
 			
 		}
 		$insertArr["modifiedOn"] = date("Y-m-d H:i:s");
-		$insertArr["requestStatus"] = $updateArr["requestStatus"];
+		$insertArr["requestStatus"] = $insertArr["requestStatus"];
 		$insertArr["modifiedBy"] = trim($postArr["userId"]);
 		$insertArr["driverId"]=trim($postArr["driverName"]);
 		$insertArr["vehicleId"]=trim($postArr["vehicleName"]);		
