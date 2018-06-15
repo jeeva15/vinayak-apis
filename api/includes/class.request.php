@@ -101,7 +101,7 @@ class REQUESTS
 			$doresult = $db->fetchArray($res1[0], 1);		
 			$i = 0;
 			foreach($doresult as $dovalue){
-				$doNumbers[$dovalue["DONumber"]]["id"] = $this->idGenerator($dovalue["DONumber"], $dovalue["modfiedOn"]);
+				$doNumbers[$dovalue["DONumber"]]["id"] = $this->idGenerator($dovalue["DONumber"], $dovalue["createdOn"]);
 				$doNumbers[$dovalue["DONumber"]]["requestStatus"] =$dovalue["requestStatus"];
 				$i++;
 			}
@@ -119,7 +119,7 @@ class REQUESTS
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
 
-		$selectFileds=array("requestId","createdBy","notificationType","projectIdFrom","requestStatus","remarks","approx","notificationNumber","driverId","vehicleId","createdOn","DORemarks");
+		$selectFileds=array("requestId","createdBy","notificationType","projectIdFrom","requestStatus","remarks","approx","notificationNumber","createdOn");
 		$whereClause = "requestId='".$listingid."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$selectFileds,$whereClause);
 		
@@ -132,7 +132,7 @@ class REQUESTS
 		}
         $projectArr["request"]["REQID"] = $this->idGenerator($projectArr["request"]["requestId"], $projectArr["request"]["createdOn"]);
 		if($doNumberReq != ""){ //particular DO details
-			$selectFileds=array("id","requestId","categoryId","subCategoryId","quantityRequested","quantityDelivered","description");
+			$selectFileds=array("id","requestId","categoryId","subCategoryId","quantityRequested","quantityDelivered","description","DORemarks","collectionRemarks","driverId","vehicleId","driverRemarks","createdOn","requestStatus");
 			 $whereClause = "requestId=".$listingid." AND DONumber=".trim($doNumberReq);
 			$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$selectFileds,$whereClause);
 
@@ -149,8 +149,12 @@ class REQUESTS
 		else{
 			$projectArr["matRequests"] = []; //invalid login
 		}
-        
-		$projectArr["request"]["activeDoNumber"] = $this->idGenerator($projectArr["matRequests"][0]["activeDoNumber"],$projectArr["matRequests"][0]["modfiedOn"]);
+        if($doNumberReq != ""){ 
+			$projectArr["request"]["activeDoNumber"] = $this->idGenerator($doNumberReq, $projectArr["matRequests"][0]["createdOn"]);
+		}else{
+			$projectArr["request"]["activeDoNumber"] = $this->idGenerator($projectArr["matRequests"][0]["activeDoNumber"],$projectArr["matRequests"][0]["modfiedOn"]);
+		}
+		
 		return $this->common->arrayToJson($projectArr);
     }
 	function updateRequestStatus($listingId, $listingStatus, $remarks){
@@ -220,6 +224,9 @@ class REQUESTS
 			$insertArr3["quantityDelivered"]=$qntyDelivered;	
 			$insertArr3["description"]=trim($value["description"]);			
 			$insertArr3["DONumber"] = $DONumber;
+			$insertArr3["DORemarks"]=trim($postArr["remarks"]);
+			$insertArr3["driverId"]=trim($postArr["driverName"]);
+			$insertArr3["vehicleId"]=trim($postArr["vehicleName"]);	
 			$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$insertArr3,$whereClause);
 		}
 		//update driver details
@@ -234,9 +241,9 @@ class REQUESTS
 		$insertArr["modifiedOn"] = date("Y-m-d H:i:s");
 		$insertArr["requestStatus"] = $insertArr["requestStatus"];
 		$insertArr["modifiedBy"] = trim($postArr["userId"]);
-		$insertArr["driverId"]=trim($postArr["driverName"]);
-		$insertArr["vehicleId"]=trim($postArr["vehicleName"]);		
-		$insertArr["DORemarks"]=trim($postArr["remarks"]);
+		// $insertArr["driverId"]=trim($postArr["driverName"]);
+		// $insertArr["vehicleId"]=trim($postArr["vehicleName"]);		
+		// $insertArr["DORemarks"]=trim($postArr["remarks"]);
 		
 		$whereClause="requestId=".$listingId;
 		$insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$insertArr,$whereClause);
@@ -257,23 +264,26 @@ class REQUESTS
 		$insertArr["modifiedOn"] = date("Y-m-d H:i:s");
         // $insertArr["requestStatus"] = trim($postArr["requestStatus"]);
 		$insertArr["modifiedBy"] = trim($postArr["userId"]);		 		
-		$insertArr["collectionRemarks"]=trim($postArr["remarks"]);
+		// $insertArr["collectionRemarks"]=trim($postArr["remarks"]);
 		
         $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		$whereClause="requestId=".$listingId;
         $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$insertArr,$whereClause);
-		
+		$l = 0;
 			foreach($postArr["multiCategory"] as $value){
 				$insertArr2 = [];
 				$uniqueId = $value["categoryId"]."-".$value["subCategoryId"]."-".$value["quantityRequested"];
 				$qntyAccepted = trim($postArr[$uniqueId]);			
-				
+				if($value["quantityDelivered"] > $qntyAccepted){
+					$l++;
+				}
 				$insertArr2["quantityAccepted"]=$qntyAccepted;
 				$insertArr2["requestStatus"]=7;
 				// $insertArr2["quantityRemaining"] = $qntityRemain - $qntyDelivered;
 				// $insertArr2["activeDoNumber"] = $DONumber;
 				$insertArr2["modifiedOn"] = date("Y-m-d H:i:s");
-				$insertArr["modifiedBy"] = trim($postArr["userId"]);
+				$insertArr2["modifiedBy"] = trim($postArr["userId"]);
+				$insertArr2["collectionRemarks"]=trim($postArr["remarks"]);
 				
 				// pr($insertArr2);
 				$whereClause2 = "requestId=".$listingId." AND id=".$value["id"]." AND DONumber=".$doNumber;
@@ -281,7 +291,21 @@ class REQUESTS
 
 				
 			}
-		
+// 			error_reporting(E_ALL);
+// ini_set("display_errors",1);
+		// echo $l."===";
+		ini_set("SMTP","smtp.gmail.com");
+		ini_set("smtp_port","587");
+		ini_set("sendmail_from","jeevanantham.n@gmail.com");
+		if($l > 0){
+			// echo "inside<br>";
+			$to = "jeevanantham.n@gmail.com";
+			$subject = "Collection Notification";
+			$message = "There is variation between Quantity Delivered and Accepted. Details Below<br />
+			<strong>Request Number :</strong> ".$postArr["requestIdFormatted"]."<br /><strong>Request Number :</strong> ".$postArr["doIdFormatted"]."<br /><br />Thanks,<br />Admin.";
+			// echo $message;
+			$this->common->sendemail('admin@vk.com',$to,$subject,$message);
+		}
 			$returnval["response"] ="success";
 			$returnval["responsecode"] = 1; 
 			return $this->common->arrayToJson($returnval);
@@ -295,7 +319,7 @@ class REQUESTS
         $insertArr["modifiedOn"] = date("Y-m-d H:i:s");
         // $insertArr["requestStatus"] = trim($postArr["requestStatus"]);
 		$insertArr["modifiedBy"] = trim($postArr["userId"]);		 		
-		$insertArr["driverRemarks"]=trim($postArr["remarks"]);
+		// $insertArr["driverRemarks"]=trim($postArr["remarks"]);
 		
         $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		$whereClause="requestId=".$listingId;
@@ -308,6 +332,7 @@ class REQUESTS
 			$insertArr2["modifiedOn"] = date("Y-m-d H:i:s");
 			$insertArr2["modifiedBy"] = trim($postArr["userId"]);	
 			$insertArr2["requestStatus"] = trim($postArr["requestStatus"]);
+			$insertArr2["driverRemarks"]=trim($postArr["remarks"]);
 			
 			$whereClause="requestId=".$listingId." AND DONumber=".$DONumber;
 			$insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$insertArr2,$whereClause);
