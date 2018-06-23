@@ -119,7 +119,7 @@ class REQUESTS
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
 
-		$selectFileds=array("requestId","createdBy","notificationType","projectIdFrom","requestStatus","remarks","approx","notificationNumber","createdOn");
+		$selectFileds=array("requestId","createdBy","notificationType","projectIdFrom","requestStatus","remarks","notificationNumber","createdOn");
 		$whereClause = "requestId='".$listingid."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$selectFileds,$whereClause);
 		
@@ -132,7 +132,7 @@ class REQUESTS
 		}
         $projectArr["request"]["REQID"] = $this->idGenerator($projectArr["request"]["requestId"], $projectArr["request"]["createdOn"]);
 		if($doNumberReq != ""){ //particular DO details
-			$selectFileds=array("id","requestId","categoryId","subCategoryId","quantityRequested","quantityDelivered","description","DORemarks","collectionRemarks","driverId","vehicleId","driverRemarks","createdOn","requestStatus");
+			$selectFileds=array("id","requestId","categoryId","subCategoryId","quantityRequested","quantityDelivered","description","DORemarks","collectionRemarks","driverId","vehicleId","driverRemarks","createdOn","requestStatus","approx");
 			 $whereClause = "requestId=".$listingid." AND DONumber=".trim($doNumberReq);
 			$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$selectFileds,$whereClause);
 
@@ -263,7 +263,10 @@ class REQUESTS
 		$dbm = new DB;
 		$insertArr["modifiedOn"] = date("Y-m-d H:i:s");
         // $insertArr["requestStatus"] = trim($postArr["requestStatus"]);
-		$insertArr["modifiedBy"] = trim($postArr["userId"]);		 		
+		$insertArr["modifiedBy"] = trim($postArr["userId"]);	
+		if($postArr[requestType] == 2){
+			$insertArr["requestStatus"]=11;
+		} 		
 		// $insertArr["collectionRemarks"]=trim($postArr["remarks"]);
 		
         $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
@@ -278,7 +281,12 @@ class REQUESTS
 					$l++;
 				}
 				$insertArr2["quantityAccepted"]=$qntyAccepted;
-				$insertArr2["requestStatus"]=7;
+				if($postArr[requestType] == 2){
+					$insertArr2["requestStatus"]=11;
+				}else{
+					$insertArr2["requestStatus"]=7;
+				}
+				
 				// $insertArr2["quantityRemaining"] = $qntityRemain - $qntyDelivered;
 				// $insertArr2["activeDoNumber"] = $DONumber;
 				$insertArr2["modifiedOn"] = date("Y-m-d H:i:s");
@@ -294,18 +302,18 @@ class REQUESTS
 // 			error_reporting(E_ALL);
 // ini_set("display_errors",1);
 		// echo $l."===";
-		ini_set("SMTP","smtp.gmail.com");
-		ini_set("smtp_port","587");
-		ini_set("sendmail_from","jeevanantham.n@gmail.com");
-		if($l > 0){
-			// echo "inside<br>";
-			$to = "jeevanantham.n@gmail.com";
-			$subject = "Collection Notification";
-			$message = "There is variation between Quantity Delivered and Accepted. Details Below<br />
-			<strong>Request Number :</strong> ".$postArr["requestIdFormatted"]."<br /><strong>Request Number :</strong> ".$postArr["doIdFormatted"]."<br /><br />Thanks,<br />Admin.";
-			// echo $message;
-			$this->common->sendemail('admin@vk.com',$to,$subject,$message);
-		}
+		// ini_set("SMTP","smtp.gmail.com");
+		// ini_set("smtp_port","587");
+		// ini_set("sendmail_from","jeevanantham.n@gmail.com");
+		// if($l > 0){
+		// 	// echo "inside<br>";
+		// 	$to = "jeevanantham.n@gmail.com";
+		// 	$subject = "Collection Notification";
+		// 	$message = "There is variation between Quantity Delivered and Accepted. Details Below<br />
+		// 	<strong>Request Number :</strong> ".$postArr["requestIdFormatted"]."<br /><strong>Request Number :</strong> ".$postArr["doIdFormatted"]."<br /><br />Thanks,<br />Admin.";
+		// 	// echo $message;
+		// 	$this->common->sendemail('admin@vk.com',$to,$subject,$message);
+		// }
 			$returnval["response"] ="success";
 			$returnval["responsecode"] = 1; 
 			return $this->common->arrayToJson($returnval);
@@ -320,6 +328,9 @@ class REQUESTS
         // $insertArr["requestStatus"] = trim($postArr["requestStatus"]);
 		$insertArr["modifiedBy"] = trim($postArr["userId"]);		 		
 		// $insertArr["driverRemarks"]=trim($postArr["remarks"]);
+		if(trim($postArr["requestType"]) == 2){
+				$insertArr["requestStatus"] = 8;
+		}
 		
         $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		$whereClause="requestId=".$listingId;
@@ -331,7 +342,12 @@ class REQUESTS
 		if($DONumber != ""){
 			$insertArr2["modifiedOn"] = date("Y-m-d H:i:s");
 			$insertArr2["modifiedBy"] = trim($postArr["userId"]);	
-			$insertArr2["requestStatus"] = trim($postArr["requestStatus"]);
+			if(trim($postArr["requestType"]) == 2){
+				$insertArr2["requestStatus"] = 8;
+			}
+			else{
+				$insertArr2["requestStatus"] = trim($postArr["requestStatus"]);
+			}
 			$insertArr2["driverRemarks"]=trim($postArr["remarks"]);
 			
 			$whereClause="requestId=".$listingId." AND DONumber=".$DONumber;
@@ -350,19 +366,26 @@ class REQUESTS
         $insertArr["projectIdFrom"]=trim($postArr["cboProjectsFrom"]);
         $insertArr["projectIdTo"]=trim($postArr["cboProjectsTo"]);
         $insertArr["description"]=trim($postArr["description"]);
-        $insertArr["driverId"]=trim($postArr["driverName"]);
-        $insertArr["vehicleId"]=trim($postArr["vehicleName"]);
+        // $insertArr["driverId"]=trim($postArr["driverName"]);
+        // $insertArr["vehicleId"]=trim($postArr["vehicleName"]);
         $insertArr["remarks"]=trim($postArr["txtRemarks"]);
         $insertArr["notificationNumber"]=trim($postArr["notificationNo"]);
         $insertArr["notificationType"]=trim($postArr["requestType"]);
         $insertArr["modifiedOn"] = date("Y-m-d H:i:s");
-        $insertArr["requestStatus"] = trim($postArr["requestStatus"]);
+        // $insertArr["requestStatus"] = trim($postArr["requestStatus"]);
 		$insertArr["modifiedBy"] = trim($postArr["userId"]);
+		if($postArr["requestStatus"] == 1 && ($postArr["requestType"] == 2 || $postArr["requestType"] == 3)){
+        	$insertArr["requestStatus"] = 4;
+		}
+		else{
+			$insertArr["requestStatus"] = trim($postArr["requestStatus"]);
+		}
 		
         $dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		$whereClause="requestId=".$listingId;
         $insid = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$insertArr,$whereClause);
 		$insid = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$whereClause);
+		$insid = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$whereClause);
 		foreach($postArr["multiCategory"] as $value){
 			$insertArr2 = [];
 			$insertArr2["requestId"]=$listingId;     
@@ -372,6 +395,22 @@ class REQUESTS
 			$insertArr2["quantityRemaining"]=trim($value["quantityRequested"]);
 			$insertArr2["description"]=trim($value["description"]);
 			$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$insertArr2,$whereClause);
+			//if request type Return or transfer
+			if($postArr["requestStatus"] == 1 && ($postArr["requestType"] == 2 || $postArr["requestType"] == 3)){
+				$insertArr3["requestId"]=$listingId;         
+				$insertArr3["categoryId"]=trim($value["categoryId"]);       
+				$insertArr3["subCategoryId"]=trim($value["subCategoryId"]);
+				$insertArr3["quantityRequested"]=trim($value["quantityRequested"]);
+				$insertArr3["requestStatus"]= 4;	
+				if($postArr["requestType"] == 2){
+					$insertArr3["approx"]= $value["rdoApprox"];
+					$insertArr3["driverId"]= $value["driverName"];
+					$insertArr3["vehicleId"]= $value["vehicleName"];
+					$insertArr3["quantityDelivered"]=trim($value["quantityRequested"]);
+				}
+				$insertArr3["description"]=trim($value["description"]);
+				$insid3 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$insertArr3,1,2);
+			}
 		}
 		$returnval["response"] ="success";
         $returnval["responsecode"] = 1; 
@@ -381,17 +420,22 @@ class REQUESTS
 	function createRequest($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 
-        $insertArr["notificationType"]=trim($postArr["cboProjectsFrom"]);
+       
         $insertArr["projectIdFrom"]=trim($postArr["cboProjectsFrom"]);
         $insertArr["projectIdTo"]=trim($postArr["cboProjectsTo"]);
         $insertArr["description"]=trim($postArr["description"]);
-        $insertArr["driverId"]=trim($postArr["driverName"]);
-        $insertArr["vehicleId"]=trim($postArr["vehicleName"]);
+        // $insertArr["driverId"]=trim($postArr["driverName"]);
+        // $insertArr["vehicleId"]=trim($postArr["vehicleName"]);
         $insertArr["remarks"]=trim($postArr["txtRemarks"]);
         $insertArr["notificationNumber"]=trim($postArr["notificationNo"]);
         $insertArr["notificationType"]=trim($postArr["requestType"]);
         $insertArr["createdOn"] = date("Y-m-d H:i:s");
-        $insertArr["requestStatus"] = trim($postArr["requestStatus"]);
+		if($postArr["requestStatus"] == 1 && ($postArr["requestType"] == 2 || $postArr["requestType"] == 3)){
+        	$insertArr["requestStatus"] = 4;
+		}
+		else{
+			$insertArr["requestStatus"] = trim($postArr["requestStatus"]);
+		}
         $insertArr["createdBy"] = trim($postArr["userId"]);
       
         
@@ -407,6 +451,23 @@ class REQUESTS
 			$insertArr2["quantityRemaining"]=trim($value["quantityRequested"]);			
 			$insertArr2["description"]=trim($value["description"]);
 			$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$insertArr2,1,2);
+			//if request type Return or transfer
+			if($postArr["requestStatus"] == 1 && ($postArr["requestType"] == 2 || $postArr["requestType"] == 3)){
+				$insertArr3["requestId"]=$insid;       
+				$insertArr3["categoryId"]=trim($value["categoryId"]);       
+				$insertArr3["subCategoryId"]=trim($value["subCategoryId"]);
+				$insertArr3["quantityRequested"]=trim($value["quantityRequested"]);
+				
+				$insertArr3["requestStatus"]= 4;	
+				if($postArr["requestType"] == 2){
+					$insertArr3["approx"]= $value["rdoApprox"];
+					$insertArr3["driverId"]= $postArr["driverName"];
+					$insertArr3["vehicleId"]= $postArr["vehicleName"];
+					$insertArr3["quantityDelivered"]=trim($value["quantityRequested"]);
+				}
+				$insertArr3["description"]=trim($value["description"]);
+				$insid3 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$insertArr3,1,2);
+			}
 		}
         $dbm->dbClose();
         if($insid == 0 || $insid == ''){ 

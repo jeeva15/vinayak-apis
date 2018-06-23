@@ -81,7 +81,7 @@ class DB {
                 {
                         $this->logError('',2);
                 }
-                if(mysqli_error()) 
+                if(mysqli_error($dbLink)) 
                 {
                         $this->recordError("DB_EXEC_QRY_ERR");
                         
@@ -113,7 +113,7 @@ class DB {
                 {
                         $this->logError('',2);
                 }
-                if(mysqli_error()) 
+                if(mysqli_error($db_link)) 
                 {
                         $this->recordError("DB_EXEC_QRY_ERR");
                         return false;
@@ -325,7 +325,7 @@ class DB {
             }
             else if (trim($whereClause) != "" || stripos($whereClause,"limit") === FALSE) 
             {
-                    echo $delQuery  = "DELETE FROM ".$dbName.".".$tableName." WHERE ".$whereClause;			
+                    $delQuery  = "DELETE FROM ".$dbName.".".$tableName." WHERE ".$whereClause;			
                     if (!$this->execute_query($dbLink, $delQuery)) 
                     {
                             $this->recordError("DEL_QRY_ERR");

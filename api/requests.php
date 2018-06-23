@@ -3,7 +3,8 @@ include_once "lib/init.php";
 
 include_once $ROOTPATH."/includes/class.request.php";
 
-
+// error_reporting(E_ALL);
+// ini_set("display_errors",1);
 
 $requestObj = new REQUESTS();
  $json = file_get_contents('php://input');
