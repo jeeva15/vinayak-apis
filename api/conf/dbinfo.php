@@ -19,6 +19,7 @@ $TABLEINFO["STATUS"] = "v_status";
 $TABLEINFO["REQUEST"] = "v_requests";
 $TABLEINFO["MATREQUEST"] = " v_materialrequests";
 $TABLEINFO["DOGENERATIONHISTORY"] = "v_dogenerationhistory";
+$TABLEINFO["TRANSFERHISTORY"] = "v_transferhistory";
 
 $SERVERS['DBHOST_MASTER'] = "localhost";
 $SERVERS['DBHOST_SLAVE'] = "localhost";

@@ -19,6 +19,7 @@ class commonAPI
         $allDetails["category"] = $this->categoryDetails();
         $allDetails["subCategory"] = $this->subCategoryDetails();
 		$allDetails["users"] = $this->usersDetails();
+		$allDetails["requestDetails"] = $this->requestDetails();
         
 		return $this->common->arrayToJson($allDetails);
 	}
@@ -100,6 +101,37 @@ class commonAPI
 		}
  
 		return $categoryArr;
+	}
+	function requestDetails(){
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
+		$db = new DB;
+		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		
+		$selectFileds=array("requestId","createdOn");
+		$whereClause = "requestStatus='3'";
+		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["REQUEST"],$selectFileds,$whereClause);
+		
+		$categoryArr = [];
+		$doNumbers = [];
+		if($res[1] > 0){
+			$categoryArr = $db->fetchArray($res[0], 1);
+			foreach($categoryArr as $key=>$value){
+				 $doNumbers[$key]["requestNo"] = $this->idGenerator($value["requestId"],$value["createdOn"]);
+					$doNumbers[$key]["requestId"] = $value["requestId"];
+			}
+		}
+		else{
+			$doNumbers=[];
+		}
+		
+		
+ 
+		return $doNumbers;
+	}
+	function idGenerator($id, $date){
+		$month = date("m", strtotime($date));
+		return $month."/".sprintf("%'.04d\n", $id);
+	
 	}
     function subCategoryDetails(){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
