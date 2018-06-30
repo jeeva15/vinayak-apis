@@ -202,7 +202,7 @@ class REQUESTS
 		$dbm = new DB;
 		$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$DONumber = $this.generateDONumber();
+		$DONumber = $this->generateDONumber();
 		$whereClause2 = "requestId =".$listingId;
 		$updid = $dbm->delete($dbcon, $DBNAME["NAME"],$TABLEINFO["MATREQUEST"],$whereClause2);
 		// $updateArr["active"]=0;
