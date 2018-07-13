@@ -195,6 +195,23 @@ class REQUESTS
 		}
 		return $DONumber;
 	}
+	function getCurrentBalance($catId, $subCatId){
+
+		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;		
+ 		
+		$dbm = new DB;
+		$dbcon = $dbm->connect('M',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
+		$selectFileds=array("currentBalance");
+		$whereClause = "categoryId=".$catId." and subCategoryId=".$subCatId;
+		$res=$dbm->select($dbcon, $DBNAME["NAME"],$TABLEINFO["SUBCATEGORY"],$selectFileds,$whereClause);
+		$projectArr = [];
+		if($res[1] > 0){
+			$projectArr = $dbm->fetchArray($res[0]); 
+			$currentBalance = $projectArr["currentBalance"];
+		}
+		return $currentBalance;
+
+	}
 	function generateDO($postArr){
 		global $DBINFO,$TABLEINFO,$SERVERS,$DBNAME;
 		
@@ -244,6 +261,14 @@ class REQUESTS
 			$insertArr3["driverId"]=trim($postArr["driverName"]);
 			$insertArr3["vehicleId"]=trim($postArr["vehicleName"]);	
 			$insid2 = $dbm->insert($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$insertArr3,$whereClause);
+			//update store balance
+			$currentBalance = $this->getCurrentBalance($value["categoryId"], $value["subCategoryId"]);
+				$updateArr["storeOut"]=$qntyDelivered;
+				$updateArr["currentBalance"]=$currentBalance - $qntyDelivered;
+				$updateWhere = "categoryId=".$value["categoryId"]." and subCategoryId=".$value["subCategoryId"];
+				$insid2 = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["SUBCATEGORY"],$updateArr,$updateWhere);
+
+
 		}
 		//update driver details
 		$updateArr = [];
@@ -300,10 +325,10 @@ class REQUESTS
 					$l++;
 				}
 				$insertArr2["quantityAccepted"]=$qntyAccepted;
-				if($postArr[requestType] == 2){
+				if($postArr["requestType"] == 2){
 					$insertArr2["requestStatus"]=11;
 				}
-				else if($postArr[requestType] == 3){
+				else if($postArr["requestType"] == 3){
 					$insertArr2["requestStatus"]=13;
 				}
 				else{
@@ -319,6 +344,14 @@ class REQUESTS
 				// pr($insertArr2);
 				$whereClause2 = "requestId=".$listingId." AND id=".$value["id"]." AND DONumber=".$doNumber;
 				 $insid2 = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$insertArr2,$whereClause2);
+				 if($postArr["requestType"] == 2){
+					//update store balance if return 
+					$currentBalance = $this->getCurrentBalance($value["categoryId"], $value["subCategoryId"]);
+					$updateArr["storeIn"]=$qntyAccepted;
+					$updateArr["currentBalance"]=$currentBalance + $qntyAccepted;
+					$updateWhere = "categoryId=".$value["categoryId"]." and subCategoryId=".$value["subCategoryId"];
+					$insid2 = $dbm->update($dbcon, $DBNAME["NAME"],$TABLEINFO["SUBCATEGORY"],$updateArr,$updateWhere);
+				 }
 
 				
 			}

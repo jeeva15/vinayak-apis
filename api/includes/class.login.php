@@ -25,6 +25,7 @@ class LOGIN
 			$userArr["response"] = "success";
 			$userArr["userId"] = $userInfo['userId'];
 			$userArr["userType"] = $userInfo['userType'];
+			$userArr["userName"] = $userInfo['userName'];
 			
 		}
 		else{
