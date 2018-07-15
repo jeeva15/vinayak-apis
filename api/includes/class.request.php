@@ -140,7 +140,7 @@ class REQUESTS
 		}
         $projectArr["request"]["REQID"] = $this->idGenerator($projectArr["request"]["requestId"], $projectArr["request"]["createdOn"]);
 		if($doNumberReq != ""){ //particular DO details
-			$selectFileds=array("id","requestId","categoryId","subCategoryId","quantityRequested","quantityDelivered","description","DORemarks","collectionRemarks","driverId","vehicleId","driverRemarks","createdOn","requestStatus","approx");
+			$selectFileds=array("id","requestId","categoryId","subCategoryId","quantityRequested","quantityDelivered","quantityAccepted","description","DORemarks","collectionRemarks","driverId","vehicleId","driverRemarks","createdOn","requestStatus","approx");
 			 $whereClause = "requestId=".$listingid." AND DONumber=".trim($doNumberReq);
 			$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["DOGENERATIONHISTORY"],$selectFileds,$whereClause);
 
