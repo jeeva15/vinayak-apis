@@ -12,6 +12,9 @@ $requestObj = new REPORTS();
  if($obj["requestCode"] === 2){ //categorywise report
     $response = $requestObj->getCurrentBalance($obj["materialName"], $obj["subCategorySel"]);
  }
+ if($obj["requestCode"] === 3){ //projectwise report
+    $response = $requestObj->getProjectReport($obj["projects"]);
+ }
  
 
 echo $response;

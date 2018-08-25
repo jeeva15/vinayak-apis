@@ -138,7 +138,7 @@ class commonAPI
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("subCategoryId", "categoryId", "subCategoryName");
+		$selectFileds=array("subCategoryId", "categoryId", "subCategoryName","price");
 		$whereClause = "subCategoryStatus='1'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["SUBCATEGORY"],$selectFileds,$whereClause);
 		
