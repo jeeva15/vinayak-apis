@@ -1,12 +1,15 @@
 <?php
 // error_reporting(E_ALL);
 // ini_set("display_errors",1);
-
+// header('Access-Control-Allow-Origin: *');
 error_reporting(0);
-session_start();
+
+// session_start();
+
 //Global Class includes
 $ROOTPATH = $_SERVER['DOCUMENT_ROOT']."/api";
 include_once $ROOTPATH."/lib/class.db.php";
+
 include_once $ROOTPATH."/lib/class.common.php";
 
 //Global Vars includes 

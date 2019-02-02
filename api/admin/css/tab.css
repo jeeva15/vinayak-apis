@@ -1,0 +1,101 @@
+/*body {
+		font: 0.8em arial, helvetica, sans-serif;
+	}
+	*/
+    #tab-topnav ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+    }
+    
+	#tab-topnav li {
+		float: left;
+		border: 1px solid #bbb;
+		border-bottom-width: 0;		
+		margin: 0;
+		border-bottom:1px #EEEEEE;
+    }
+    
+	#tab-topnav a {
+		text-decoration: none;
+		display: block;
+		background: #eee;
+		padding: 0.24em 1em;
+		color: #00c;
+		width: 16em;
+		text-align: center;
+    }
+	
+	#tab-topnav a:hover {
+		background: #ddf;
+	}
+	
+	#tab-topnav #selected {
+		border-color: black;
+		border-bottom:1px solid;
+	}
+	
+	#tab-topnav #selected a {
+		/*position: relative;*/
+		top: 1px;
+		background: white;
+		color: black;
+		font-weight: bold;
+	}
+	
+	#content {
+		border: 0px solid black;
+		clear: both;
+		padding: 0 0em;
+		width:990px;		
+	}
+	
+	h1 {
+		margin: 0;
+		padding: 0 0 1em 0;
+	}
+   /* Customer tab*/
+   
+    #tab-topcust ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+                font-size:12px;
+    }
+    
+	#tab-topcust li {
+		float: left;
+		border: 1px solid #bbb;		
+		margin: 0;
+		
+    }
+    
+	#tab-topcust a {
+		text-decoration: none;
+		display: block;
+		background: #eee;
+		padding: 0.24em 1em;
+		color: #2784BD;
+		width: 8em;
+		text-align: center;
+    }
+	
+	#tab-topcust a:hover {
+		background: #C3C1C1;
+             
+		
+	}
+	
+	#tab-topcust #selected {
+                border-color:#95AEBD;                
+                border-bottom:1px solid #95AEBD;
+		
+	}
+	
+	#tab-topcust #selected a {
+		/*position: relative;*/
+		top: 1px;
+		background: #C3C1C1;
+		color: #006EB1;
+                font-size:14px;
+	}

@@ -1,0 +1,28 @@
+
+
+button, input[type=submit], input[type=reset], input[type=button], .button
+{
+	border-color: #abc3d7;
+	background-color: #ecf1f4;
+	color: #000;
+	background-image: url(images/btn.gif);
+	font-size: 12px;
+}
+
+button:hover, input[type=submit]:hover, input[type=reset]:hover, input[type=button]:hover,
+button:focus, input[type=submit]:focus, input[type=reset]:focus, input[type=button]:focus,
+button[selected], input[type=submit][selected], input[type=reset][selected], input[type=button][selected]
+{
+	background-color: #4e8ccf;
+	border-color: #4e8ccf;
+	font-size: 12px;
+}
+input,select,textarea
+{
+	border-color: #94c1e8;
+	background-color: #ffffff;
+	font-size: 12px;
+}
+
+
+

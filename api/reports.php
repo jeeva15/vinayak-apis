@@ -15,7 +15,9 @@ $requestObj = new REPORTS();
  if($obj["requestCode"] === 3){ //projectwise report
     $response = $requestObj->getProjectReport($obj["projects"]);
  }
- 
+ if($obj["requestCode"] === 4){ //notification search
+    $response = $requestObj->notificationSearch($obj);
+ }
 
 echo $response;
 

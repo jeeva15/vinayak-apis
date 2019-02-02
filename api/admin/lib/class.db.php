@@ -302,7 +302,7 @@ class DB {
                            
                             }
                     }
-                 $update_query = "UPDATE ".$dbName.".".$tableName." SET ".rtrim($u_query,', ')." WHERE ".$whereClause;
+                   $update_query = "UPDATE ".$dbName.".".$tableName." SET ".rtrim($u_query,', ')." WHERE ".$whereClause;
                     			
                     
                     if (!$this->execute_query($dbLink, $update_query)) 

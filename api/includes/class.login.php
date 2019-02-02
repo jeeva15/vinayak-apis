@@ -15,7 +15,7 @@ class LOGIN
 		$db = new DB;
 		$dbcon = $db->connect('S',$DBNAME["NAME"],$DBINFO["USERNAME"],$DBINFO["PASSWORD"]);
 		
-		$selectFileds=array("userId","userName","userType");
+		$selectFileds=array("userId","userType","Name");
 		$whereClause = "username='$username' AND password='".md5($password)."'";
 		$res=$db->select($dbcon, $DBNAME["NAME"],$TABLEINFO["USERS"],$selectFileds,$whereClause);
 		
@@ -25,7 +25,7 @@ class LOGIN
 			$userArr["response"] = "success";
 			$userArr["userId"] = $userInfo['userId'];
 			$userArr["userType"] = $userInfo['userType'];
-			$userArr["userName"] = $userInfo['userName'];
+			$userArr["userName"] = $userInfo['Name'];
 			
 		}
 		else{
